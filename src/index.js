@@ -8,13 +8,11 @@ import { createImageCards } from "./js/createImageCards";
 const refs = {
     form: document.querySelector('.search-form'),
     imagesContainer: document.querySelector('.gallery'),
-    loadMoreBtn: document.querySelector('.load-more'),
 }
 let imageName = '';
 let counterImages = 0;
 
 refs.form.addEventListener('submit', onFormSubmit);
-refs.loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
 
 let lightbox = new SimpleLightbox('.photo-card a', {
     captions: true,
@@ -29,17 +27,14 @@ async function onFormSubmit(e) {
     imageName = refs.form.elements.searchQuery.value;
 
     try {
-    resetPage();
-    refs.loadMoreBtn.classList.remove('is-visible');
+        resetPage();
         await fetchImages(imageName).then(({ images, totalHits }) => {
             refs.imagesContainer.innerHTML = createImageCards(images);
             lightbox.refresh();
-            refs.loadMoreBtn.classList.add('is-visible');
             counterImages = images.length;
 
             if (images.length === 0 || imageName === '') {
                 clearGalleryContainer();
-                refs.loadMoreBtn.classList.remove('is-visible');
                 Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
             } else {
                 Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
@@ -50,24 +45,36 @@ async function onFormSubmit(e) {
     }
 }
 
-async function onLoadMoreBtnClick() {
+async function onLoadMoreImages() {
     try {
-        await fetchImages(imageName).then(({ images, totalHits }) => {
-            refs.imagesContainer.insertAdjacentHTML('beforeend', createImageCards(images));
-            lightbox.refresh();
-            counterImages += images.length;
+        const options = {
+            rootMargin: '0px',
+            threshold: 1.0,
+        };
 
-            if (counterImages > totalHits) {
-                refs.loadMoreBtn.classList.remove('is-visible');
-                setTimeout(() => {
-                    Notiflix.Notify.failure("We're sorry, but you've reached the end of search results.");
-                }, 2000);
-            }
-        });
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    fetchImages(imageName).then(({ images, totalHits }) => {
+                        refs.imagesContainer.insertAdjacentHTML('beforeend', createImageCards(images));
+                        lightbox.refresh();
+                        counterImages += images.length;
+
+                        if (counterImages > totalHits) {
+                            setTimeout(() => {
+                                Notiflix.Notify.failure("We're sorry, but you've reached the end of search results.");
+                            }, 2000);
+                        }
+                    });
+                }
+            })
+        }, options);
+
+        observer.observe(document.querySelector('.scroll-guard'));
     } catch (error) {
         console.log(error);
     }
-}
+} 
 
 function clearGalleryContainer() {
     refs.imagesContainer.innerHTML = '';

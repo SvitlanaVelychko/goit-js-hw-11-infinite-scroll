@@ -20,13 +20,13 @@ img {
     display: flex;
     justify-content: center;
     width: 100%;
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 30px 20px;
     font: inherit;
     background-color: #333397;
 }
 
 input {
+    display: inline-block;
     min-width: 250px;
     border: none;
     padding: 5px;
