@@ -29,6 +29,7 @@ async function onFormSubmit(e) {
 
     try {
         resetPage();
+        counterImages = 0;
         
         const options = {
             rootMargin: '200px',
@@ -45,8 +46,16 @@ async function onFormSubmit(e) {
                         } else {
                             refs.imagesContainer.insertAdjacentHTML('beforeend', createImageCards(images));
                             lightbox.refresh();
+                            counterImages += images.length;
+                            console.log(counterImages);
                             Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+                            if (counterImages > totalHits) {
+                                observer.unobserve(refs.controllerScroll);
+                                Notiflix.Notify.failure("We're sorry, but you've reached the end of search results.");
+                            }
                         }
+                    }).finally(() => {
+                        refs.form.reset();
                     });
                 }
             });
